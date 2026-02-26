@@ -1,0 +1,25 @@
+﻿<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>AddStoredProcedure</id>
+    <version>1.0.8</version>
+    <authors>brynjmsdlnn</authors>
+    <owners>brynjmsdlnn</owners>
+    <description>Package Manager Console helper that adds timestamped SQL stored procedure scripts to the Infrastructure project.</description>
+    <tags>powershell pmc ef6 stored-procedure</tags>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <developmentDependency>true</developmentDependency>
+    <readme>README.md</readme>
+    <dependencies>
+      <group targetFramework="net48" />
+      <group targetFramework="net481" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\Add-StoredProcedure.ps1" target="tools\Add-StoredProcedure.ps1" />
+    <file src="tools\init.ps1"                target="tools\init.ps1" />
+    <file src="lib\net48\_._"                 target="lib\net48\_._" />
+    <file src="lib\net481\_._"                target="lib\net481\_._" />
+    <file src="README.md"                     target="README.md" />
+  </files>
+</package>

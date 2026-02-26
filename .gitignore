@@ -1,0 +1,4 @@
+.staging/
+artifacts/
+*.nupkg
+nuget.exe
