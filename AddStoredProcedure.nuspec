@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>AddStoredProcedure</id>
-    <version>1.0.8</version>
+    <version>1.0.11</version>
     <authors>brynjmsdlnn</authors>
     <owners>brynjmsdlnn</owners>
     <description>Package Manager Console helper that adds timestamped SQL stored procedure scripts to the Infrastructure project.</description>

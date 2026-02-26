@@ -1,10 +1,10 @@
-﻿function Add-StoredProcedure {
+﻿function global:Add-StoredProcedure {
     [CmdletBinding(SupportsShouldProcess=$true)]
     param (
         [Parameter(Mandatory=$false)] [switch]$Help,
         [Parameter(Mandatory=$false)] [string]$Name,
         [Parameter(Mandatory=$false)] [string]$Schema,
-        [Parameter(Mandatory=$false)] [string]$Module,
+        [Parameter(Mandatory=$true)] [string]$Table,
         [Parameter(Mandatory=$false)] [string]$Author,
         [Parameter(Mandatory=$false)] [switch]$Anon
     )
@@ -14,12 +14,12 @@
     # -----------------------------
     if ($Help) {
         Write-Host @"
-Add-StoredProcedure -Name <string> -Schema <string> [-Module <string>] [-Author <string>] [-Anon]
+Add-StoredProcedure -Name <string> -Schema <string> -Table <string> [-Author <string>] [-Anon]
 
 Parameters:
   -Name     Required. Name of the stored procedure.
-  -Schema   Required. Database schema (e.g., WIRE, Admin).
-  -Module   Optional. Logical grouping folder. Defaults to schema name.
+  -Schema   Required. Database schema (e.g., dbo, Admin).
+  -Table    Required. Logical grouping folder inside schema.
   -Author   Optional. Explicit author name. Overrides smart detection.
   -Anon     Optional switch. Forces author to solution name.
   -Help     Optional switch. Show this usage info.
@@ -37,8 +37,7 @@ Behavior:
     # -----------------------------
     if (-not $Name)   { Write-Error "-Name is required.";   return }
     if (-not $Schema) { Write-Error "-Schema is required."; return }
-
-    if (-not $Module) { $Module = $Schema }
+    if (-not $Table)  { Write-Error "-Table is required.";  return }
 
     # ----------------------------- 
     # Recursive project helper
@@ -79,7 +78,7 @@ Behavior:
     }
 
     $projectPath = Split-Path $migrationProject.FullName
-    $folder = Join-Path $projectPath "Database\StoredProcedures\$Module"
+    $folder = Join-Path $projectPath "Database\StoredProcedures\$Schema\$Table"
 
     if (-not (Test-Path $folder)) {
         New-Item -ItemType Directory -Path $folder | Out-Null
@@ -156,44 +155,16 @@ END
         [System.IO.File]::WriteAllText($sqlFilePath, $content, $utf8NoBom)
 
         # ----------------------------- 
-        # Register as EmbeddedResource in .csproj
+        # Register as EmbeddedResource in .csproj via DTE
         # -----------------------------
-        $csprojPath = $migrationProject.FullName
-        $csprojContent = [System.IO.File]::ReadAllText($csprojPath)
-
-        # Relative path for the csproj entry (e.g. Database\StoredProcedures\WIRE\Users\timestamp_Name.sql)
-        $relativePath = "Database\StoredProcedures\$Module\$fileName"
-
-        # The new EmbeddedResource line
-        $newEntry = "    <EmbeddedResource Include=""$relativePath"" />"
-
-        # Comment header for this Schema\Module group
-        $groupComment = "    <!-- Stored Procedures - $Schema/$Module -->"
-
-        if ($csprojContent -match [regex]::Escape($groupComment)) {
-            # Group comment already exists — insert new entry after the last entry in that group
-            $pattern = "(?<=$([regex]::Escape($groupComment))[\s\S]*?<EmbeddedResource Include=""Database\\StoredProcedures\\$([regex]::Escape("$Schema\$Module"))\\[^""]*"" \/>)"
-            if ($csprojContent -match $pattern) {
-                $csprojContent = $csprojContent -replace $pattern, "`$0`n$newEntry"
-            } else {
-                # Comment exists but no entries yet — insert after comment line
-                $csprojContent = $csprojContent -replace [regex]::Escape($groupComment), "$groupComment`n$newEntry"
-            }
-        } else {
-            # No group for this Schema\Module yet — find the closing </ItemGroup> or last EmbeddedResource and append a new group
-            $insertBlock = "$groupComment`n$newEntry"
-            if ($csprojContent -match '([ \t]*<EmbeddedResource Include="Database\\StoredProcedures\\[^"]*" \/>[\r\n]+)([ \t]*<!--)') {
-                # Insert before the next group comment
-                $csprojContent = $csprojContent -replace '([ \t]*<EmbeddedResource Include="Database\\StoredProcedures\\[^"]*" \/>[\r\n]+)([ \t]*<!--)', "`$1$insertBlock`n`$2"
-            } else {
-                # Fallback — insert before </ItemGroup> that contains EmbeddedResource entries
-                $csprojContent = $csprojContent -replace '(\s*</ItemGroup>)', "`n$insertBlock`$1"
-            }
+        # Note: DTE tracks the project item properties natively
+        # 3 = EmbeddedResource
+        $projectItem = $migrationProject.ProjectItems.AddFromFile($sqlFilePath)
+        if ($projectItem) {
+            $projectItem.Properties.Item("BuildAction").Value = 3
         }
 
-        [System.IO.File]::WriteAllText($csprojPath, $csprojContent, $utf8NoBom)
-
         Write-Host "Created stored procedure file at: $sqlFilePath"
-        Write-Host "Registered as EmbeddedResource in: $csprojPath"
+        Write-Host "Registered as EmbeddedResource in: $($migrationProject.FullName)"
     }
 }

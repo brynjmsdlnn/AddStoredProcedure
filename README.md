@@ -36,7 +36,7 @@ Install-Package AddStoredProcedure -ProjectName YourSolution.Infrastructure
 ### From a local source
 
 ```powershell
-Install-Package AddStoredProcedure -Version 1.0.8 `
+Install-Package AddStoredProcedure -Version 1.0.11 `
   -ProjectName YourSolution.Infrastructure `
   -Source "C:\path\to\nuget\AddStoredProcedure\artifacts"
 ```
@@ -51,7 +51,7 @@ Install-Package AddStoredProcedure -Version 1.0.8 `
 ### Syntax
 
 ```powershell
-Add-StoredProcedure -Name <string> -Schema <string> [-Module <string>] [-Author <string>] [-Anon]
+Add-StoredProcedure -Name <string> -Schema <string> -Table <string> [-Author <string>] [-Anon]
 ```
 
 ### Parameters
@@ -59,32 +59,27 @@ Add-StoredProcedure -Name <string> -Schema <string> [-Module <string>] [-Author 
 | Parameter  | Required | Description |
 |------------|----------|-------------|
 | `-Name`    | Yes      | Name of the stored procedure |
-| `-Schema`  | Yes      | Database schema (e.g. `WIRE`, `PSGC`, `Admin`) |
-| `-Module`  | No       | Logical subfolder grouping. Defaults to `-Schema` value |
+| `-Schema`  | Yes      | Database schema (e.g. `dbo`, `Admin`) |
+| `-Table`   | Yes      | Logical subfolder grouping by table. |
 | `-Author`  | No       | Explicit author name. Overrides auto-detection |
 | `-Anon`    | No       | Forces author to the solution name |
 | `-Help`    | No       | Displays usage information |
 
 ### Examples
 
-**Basic usage — schema and module default to the same value:**
+**Basic usage:**
 ```powershell
-Add-StoredProcedure -Name "usp_Users_GetAll" -Schema "WIRE"
-```
-
-**With a module subfolder:**
-```powershell
-Add-StoredProcedure -Name "usp_Users_GetAll" -Schema "WIRE" -Module "Users"
+Add-StoredProcedure -Name "usp_Users_GetAll" -Schema "dbo" -Table "Users"
 ```
 
 **With an explicit author:**
 ```powershell
-Add-StoredProcedure -Name "usp_Roles_GetAll" -Schema "WIRE" -Module "Roles" -Author "John Doe"
+Add-StoredProcedure -Name "usp_Roles_GetAll" -Schema "dbo" -Table "Roles" -Author "John Doe"
 ```
 
 **Preview without creating files (`-WhatIf`):**
 ```powershell
-Add-StoredProcedure -Name "usp_Roles_GetAll" -Schema "WIRE" -Module "Roles" -WhatIf
+Add-StoredProcedure -Name "usp_Roles_GetAll" -Schema "dbo" -Table "Roles" -WhatIf
 ```
 
 ### Output
@@ -94,7 +89,7 @@ Running the command generates a `.sql` file under your Infrastructure project:
 ```
 Database\
   StoredProcedures\
-    WIRE\
+    dbo\
       Users\
         20260226150000_usp_Users_GetAll.sql
 ```
@@ -102,8 +97,8 @@ Database\
 And registers it in your `.csproj` as:
 
 ```xml
-<!-- Stored Procedures - WIRE/Users -->
-<EmbeddedResource Include="Database\StoredProcedures\WIRE\Users\20260226150000_usp_Users_GetAll.sql" />
+<!-- Stored Procedures - dbo/Users -->
+<EmbeddedResource Include="Database\StoredProcedures\dbo\Users\20260226150000_usp_Users_GetAll.sql" />
 ```
 
 ### Generated SQL template
@@ -111,12 +106,12 @@ And registers it in your `.csproj` as:
 ```sql
 -- =============================================
 -- Author:      John Doe
--- Object:      StoredProcedure [WIRE].[usp_Users_GetAll]
+-- Object:      StoredProcedure [dbo].[usp_Users_GetAll]
 -- Script date: 02/26/2026
 -- Description:
 -- =============================================
 
-CREATE OR ALTER PROCEDURE [WIRE].[usp_Users_GetAll]
+CREATE OR ALTER PROCEDURE [dbo].[usp_Users_GetAll]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -159,7 +154,7 @@ In a terminal, navigate to the package folder and run:
 ### Publish to nuget.org
 
 ```powershell
-.\nuget push "artifacts\AddStoredProcedure.1.0.8.nupkg" `
+.\nuget push "artifacts\AddStoredProcedure.1.0.11.nupkg" `
   -ApiKey YOUR_API_KEY `
   -Source https://api.nuget.org/v3/index.json
 ```
@@ -169,7 +164,7 @@ In a terminal, navigate to the package folder and run:
 ### Unlist a version
 
 ```powershell
-.\nuget delete AddStoredProcedure 1.0.8 `
+.\nuget delete AddStoredProcedure 1.0.11 `
   -ApiKey YOUR_API_KEY `
   -Source https://api.nuget.org/v3/index.json
 ```
@@ -186,13 +181,13 @@ The `init.ps1` did not run. This can happen on upgrades. Fix:
 
 ```powershell
 Uninstall-Package AddStoredProcedure -ProjectName YourSolution.Infrastructure
-Install-Package AddStoredProcedure -Version 1.0.8 -ProjectName YourSolution.Infrastructure
+Install-Package AddStoredProcedure -Version 1.0.11 -ProjectName YourSolution.Infrastructure
 ```
 
 If the error persists, manually dot-source the function:
 
 ```powershell
-. "C:\path\to\packages\AddStoredProcedure.1.0.8\tools\Add-StoredProcedure.ps1"
+. "C:\path\to\packages\AddStoredProcedure.1.0.11\tools\Add-StoredProcedure.ps1"
 ```
 
 ---
@@ -202,7 +197,7 @@ If the error persists, manually dot-source the function:
 You are running an older version of the script (`1.0.6` or earlier) that is still loaded in memory from a previous session. Reload the correct version:
 
 ```powershell
-. "C:\path\to\packages\AddStoredProcedure.1.0.8\tools\Add-StoredProcedure.ps1"
+. "C:\path\to\packages\AddStoredProcedure.1.0.11\tools\Add-StoredProcedure.ps1"
 ```
 
 ---
@@ -243,7 +238,7 @@ Manually clean up:
 PMC executed `init.ps1` in a child scope. Dot-source manually as a workaround:
 
 ```powershell
-. "C:\path\to\packages\AddStoredProcedure.1.0.8\tools\Add-StoredProcedure.ps1"
+. "C:\path\to\packages\AddStoredProcedure.1.0.11\tools\Add-StoredProcedure.ps1"
 ```
 
 ---
